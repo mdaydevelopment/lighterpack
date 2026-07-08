@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "lighterpack.fullname" . }}
+  labels:
+    {{- include "lighterpack.labels" . | nindent 4 }}
+data:
+  local.json: |
+    {{- $config := deepCopy .Values.config }}
+    {{- $_ := set $config "databaseUrl" (include "lighterpack.databaseUrl" .) }}
+    {{- $config | toPrettyJson | nindent 4 }}

@@ -1,0 +1,9 @@
+apiVersion: v2
+name: lighterpack
+description: LighterPack is a website to track the gear you take on adventures
+type: application
+version: 0.1.0
+appVersion: "latest"
+home: https://github.com/mdaydevelopment/lighterpack
+sources:
+  - https://github.com/mdaydevelopment/lighterpack

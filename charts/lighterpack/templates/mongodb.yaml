@@ -1,0 +1,83 @@
+{{- if .Values.mongodb.enabled -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "lighterpack.mongodb.fullname" . }}
+  labels:
+    {{- include "lighterpack.labels" . | nindent 4 }}
+    app.kubernetes.io/component: mongodb
+spec:
+  type: ClusterIP
+  ports:
+    - port: 27017
+      targetPort: mongodb
+      protocol: TCP
+      name: mongodb
+  selector:
+    {{- include "lighterpack.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: mongodb
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "lighterpack.mongodb.fullname" . }}
+  labels:
+    {{- include "lighterpack.labels" . | nindent 4 }}
+    app.kubernetes.io/component: mongodb
+spec:
+  serviceName: {{ include "lighterpack.mongodb.fullname" . }}
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "lighterpack.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: mongodb
+  template:
+    metadata:
+      labels:
+        {{- include "lighterpack.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: mongodb
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: mongodb
+          image: "{{ .Values.mongodb.image.repository }}:{{ .Values.mongodb.image.tag }}"
+          imagePullPolicy: {{ .Values.mongodb.image.pullPolicy }}
+          ports:
+            - name: mongodb
+              containerPort: 27017
+              protocol: TCP
+          livenessProbe:
+            tcpSocket:
+              port: mongodb
+          readinessProbe:
+            tcpSocket:
+              port: mongodb
+          {{- with .Values.mongodb.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: data
+              mountPath: /data/db
+      {{- if not .Values.mongodb.persistence.enabled }}
+      volumes:
+        - name: data
+          emptyDir: {}
+      {{- end }}
+  {{- if .Values.mongodb.persistence.enabled }}
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        {{- with .Values.mongodb.persistence.storageClass }}
+        storageClassName: {{ . }}
+        {{- end }}
+        resources:
+          requests:
+            storage: {{ .Values.mongodb.persistence.size }}
+  {{- end }}
+{{- end }}

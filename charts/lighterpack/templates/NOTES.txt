@@ -1,0 +1,26 @@
+LighterPack has been deployed.
+
+{{- if .Values.ingress.enabled }}
+It is reachable at:
+{{- range .Values.ingress.hosts }}
+  http{{ if $.Values.ingress.tls }}s{{ end }}://{{ .host }}
+{{- end }}
+{{- else }}
+To reach it locally, port-forward the service:
+
+  kubectl --namespace {{ .Release.Namespace }} port-forward svc/{{ include "lighterpack.fullname" . }} {{ .Values.service.port }}:{{ .Values.service.port }}
+
+then open http://localhost:{{ .Values.service.port }}
+{{- end }}
+
+{{- if .Values.mongodb.enabled }}
+A bundled single-instance MongoDB ({{ .Values.mongodb.image.repository }}:{{ .Values.mongodb.image.tag }}) is deployed at
+"{{ include "lighterpack.databaseUrl" . }}".
+{{- if not .Values.mongodb.persistence.enabled }}
+WARNING: mongodb.persistence.enabled is false — data is lost when the
+MongoDB pod restarts.
+{{- end }}
+{{- else }}
+Note: the app expects a MongoDB instance reachable at
+"{{ include "lighterpack.databaseUrl" . }}" (from .Values.config.databaseUrl).
+{{- end }}

@@ -11,6 +11,10 @@ RUN npm ci
 
 COPY . .
 
+# Build production assets (public/dist), required when running with
+# config environment=production
+RUN npm run build
+
 # Web
 EXPOSE 3000
 
